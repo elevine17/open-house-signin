@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luxury Open House Sign-In</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    
+    <!-- 
+    ======================================
+    PROPERTY CONFIGURATION SECTION
+    ======================================
+    Default values (will be replaced when MLS ID is entered)
+    -->
+    <script>
+        // Property Information - These are the default values
+        const PROPERTY_CONFIG = {
+            // Property details
+            propertyName: "Luxury Mountain Retreat",
+            propertyAddress: "123 Alpine Way, Park City, UT 84060",
+            propertyPrice: "$2,450,000",
+            mlsNumber: "",
+            
+            // Open house details
+            agentName: "Jane Smith",
+            agentPhone: "(435) 555-1234",
+            agentEmail: "jane@luxuryrealty.com",
+            
+            // Company branding
+            companyName: "Luxury Real Estate",
+            companyLogo: "", // If you have a logo URL, add it here
+            primaryColor: "#14253d", // Dark blue
+            secondaryColor: "#7c5e2e", // Gold
+            
+            // Carousel images - add up to 6 image URLs
+            // For real implementation, use actual image paths
+            carouselImages: [
+                "/api/placeholder/800/500", // Replace with actual image paths
+                "/api/placeholder/800/500", 
+                "/api/placeholder/800/500",
+                "/api/placeholder/800/500"
+            ],
+            
+            // Carousel captions - one for each image
+            carouselCaptions: [
+                "Luxury Living at Its Finest",
+                "Stunning Mountain Views",
+                "Gourmet Chef's Kitchen",
+                "Resort-Style Pool"
+            ],
+            
+            // QR code for digital sign-in
+            // For actual implementation, generate a QR code for your Google Form or other digital sign-in
+            qrCodeImage: "/api/placeholder/200/200", // Replace with actual QR code image
+            qrCodeText: "Scan to sign in on your phone"
+        };
+        
+        // MLS API Configuration
+        const MLS_API_CONFIG = {
+            apiKey: "YOUR_API_KEY_HERE", // You'll need to get an API key from your MLS provider
+            baseUrl: "https://api.mlsprovider.com/v1", // Replace with actual MLS API endpoint
+            
+            // This is the endpoint to get a property by MLS ID
+            propertyEndpoint: "/properties"
+        };
+    </script>
+    <style>
+        :root {
+            --primary: #14253d;
+            --secondary: #7c5e2e;
+            --light: #f5f5f5;
+            --error: #b71c1c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Playfair Display', 'Georgia', serif;
+        }
+        
+        body {
+            background-color: var(--light);
+            color: var(--primary);
+            max-width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .header {
+            padding: 20px 0;
+            text-align: center;
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+        
+        .property-details {
+            text-align: center;
+            padding: 10px 0;
+            background-color: rgba(0,0,0,0.05);
+            font-size: 0.9rem;
+        }
+        
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 20px 20px;
+        }
+        
+        /* Admin Panel */
+        .admin-panel {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        
+        .admin-panel h3 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .mls-input-group {
+            display: flex;
+        }
+        
+        .mls-input-group input {
+            flex: 1;
+            margin-right: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .mls-input-group button {
+            background-color: var(--primary);
+            padding: 0 20px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--secondary);
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Carousel Styling */
+        .carousel-container {
+            position: relative;
+            margin: 20px 0;
+            height: 35vh;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .carousel {
+            display: flex;
+            height: 100%;
+            transition: transform 0.8s ease-in-out;
+        }
+        
+        .carousel-item {
+            min-width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            text-align: center;
+        }
+        
+        /* Form Styling */
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .qr-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: rgba(0,0,0,0.03);
+            border-radius: 8px;
+        }
+        
+        .qr-code {
+            width: 120px;
+            height: 120px;
+            margin: 10px 0;
+        }
+        
+        .qr-text {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+        
+        .or-divider {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            color: #888;
+        }
+        
+        .or-divider::before,
+        .or-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .or-divider::before {
+            margin-right: 10px;
+        }
+        
+        .or-divider::after {
+            margin-left: 10px;
+        }
+        
+        h2 {
+            margin-bottom: 20px;
+            color: var(--secondary);
+            font-weight: 400;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border 0.3s ease;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--secondary);
+        }
+        
+        .error-message {
+            color: var(--error);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .input-error {
+            border-color: var(--error);
+        }
+        
+        button {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 15px 0;
+            width: 100%;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            letter-spacing: 1px;
+        }
+        
+        button:hover {
+            background-color: #8d6a34;
+        }
+        
+        .success-message {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(76, 175, 80, 0.1);
+            border-radius: 5px;
+            color: #4CAF50;
+        }
+        
+        .offline-indicator {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #ff9800;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 1000;
+        }
+        
+        /* Agent name container */
+        .agent-name-container {
+            display: none;
+        }
+        
+        /* Toggle switch for admin panel */
+        .toggle-admin {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            width: auto;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <button class="toggle-admin" id="toggle-admin">Admin Panel</button>
+    
+    <div class="header">
+        <h1 id="property-title">LUXURY OPEN HOUSE</h1>
+    </div>
+    
+    <div class="property-details" id="property-details">
+        <!-- Property details will be inserted here by JavaScript -->
+    </div>
+    
+    <div class="content">
+        <!-- Admin Panel (hidden by default) -->
+        <div class="admin-panel" id="admin-panel" style="display: none;">
+            <h3>Property Configuration</h3>
+            <div class="form-group mls-input-group">
+                <input type="text" id="mls-id" placeholder="Enter MLS ID to load property data">
+                <button id="load-property">Load</button>
+            </div>
+            <div class="loading" id="loading">
+                <span class="spinner"></span> Loading property data...
+            </div>
+        </div>
+        
+        <!-- Image Carousel -->
+        <div class="carousel-container">
+            <div class="carousel" id="carousel">
+                <!-- Carousel images will be inserted here by JavaScript -->
+            </div>
+            <div class="caption" id="carousel-caption">Luxury Living at Its Finest</div>
+        </div>
+        
+        <!-- Form -->
+        <div class="form-container">
+            <h2>Welcome to our Open House</h2>
+            
+            <!-- QR Code Section -->
+            <div class="qr-section">
+                <p>Quick Sign-In Option:</p>
+                <img id="qr-code" class="qr-code" alt="QR Code for digital sign-in">
+                <div class="qr-text" id="qr-text">Scan to sign in on your phone</div>
+            </div>
+            
+            <div class="or-divider">OR</div>
+            
+            <form id="sign-in-form">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" required>
+                    <div class="error-message">Please enter your name</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required>
+                    <div class="error-message">Please enter a valid email address</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" required>
+                    <div class="error-message">Please enter a valid phone number</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="agent">Are you working with an agent?</label>
+                    <select id="agent" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                    <div class="error-message">Please select an option</div>
+                </div>
+                
+                <div class="form-group agent-name-container" style="display: none;">
+                    <label for="agent-name">Agent's Name</label>
+                    <input type="text" id="agent-name">
+                    <div class="error-message">Please enter your agent's name</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="feedback">Provide Feedback Anonymously?</label>
+                    <select id="feedback" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                    <div class="error-message">Please select an option</div>
+                </div>
+                
+                <button type="submit">SUBMIT</button>
+            </form>
+            
+            <div class="success-message">
+                Thank you for signing in! Enjoy your visit.
+            </div>
+            
+            <div class="offline-indicator">
+                You are currently offline. Your information will be saved and submitted when you reconnect.
+            </div>
+        </div>
+        
+        <div class="footer" id="footer">
+            <p>© 2025 Luxury Real Estate</p>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast-notification"></div>
+    
+    <script>
+        // Toggle Admin Panel
+        document.getElementById('toggle-admin').addEventListener('click', function() {
+            const adminPanel = document.getElementById('admin-panel');
+            if (adminPanel.style.display === 'none') {
+                adminPanel.style.display = 'block';
+            } else {
+                adminPanel.style.display = 'none';
+            }
+        });
+        
+        // Load property data from MLS
+        document.getElementById('load-property').addEventListener('click', function() {
+            const mlsId = document.getElementById('mls-id').value.trim();
+            
+            if (!mlsId) {
+                showToast('Please enter an MLS ID');
+                return;
+            }
+            
+            // Show loading indicator
+            document.getElementById('loading').style.display = 'block';
+            
+            // In a real implementation, you would call the MLS API here
+            // For this example, we'll simulate an API call with a timeout
+            fetchPropertyData(mlsId);
+        });
+        
+        // Simulated MLS API call
+        function fetchPropertyData(mlsId) {
+            // In a real implementation, you would make an actual API call
+            // For example:
+            /*
+            fetch(`${MLS_API_CONFIG.baseUrl}${MLS_API_CONFIG.propertyEndpoint}/${mlsId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${MLS_API_CONFIG.apiKey}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update PROPERTY_CONFIG with the data from the API
+                updatePropertyConfig(data);
+            })
+            .catch(error => {
+                console.error('Error fetching property data:', error);
+                showToast('Error loading property data: ' + error.message);
+            })
+            .finally(() => {
+                document.getElementById('loading').style.display = 'none';
+            });
+            */
+            
+            // For demonstration, we'll simulate a successful API response after a delay
+            setTimeout(() => {
+                // Simulated property data
+                const propertyData = {
+                    propertyName: "Elegant Lakefront Estate",
+                    propertyAddress: "456 Lakeview Drive, Park City, UT 84060",
+                    propertyPrice: "$3,850,000",
+                    mlsNumber: mlsId,
+                    agentName: "Michael Johnson",
+                    agentPhone: "(435) 555-9876",
+                    agentEmail: "michael@luxuryrealty.com",
+                    carouselImages: [
+                        "/api/placeholder/800/500",
+                        "/api/placeholder/800/500",
+                        "/api/placeholder/800/500"
+                    ],
+                    carouselCaptions: [
+                        "Stunning Lakefront Views",
+                        "Luxurious Master Suite",
+                        "Professional Chef's Kitchen"
+                    ]
+                };
+                
+                // Update the property configuration
+                updatePropertyConfig(propertyData);
+                
+                // Hide loading indicator
+                document.getElementById('loading').style.display = 'none';
+                
+                // Show success message
+                showToast('Property data loaded successfully');
+            }, 1500);
+        }
+        
+        // Update property configuration with new data
+        function updatePropertyConfig(data) {
+            // Update the PROPERTY_CONFIG object with the new data
+            Object.assign(PROPERTY_CONFIG, data);
+            
+            // Apply the updated configuration to the UI
+            applyPropertyConfiguration();
+        }
+        
+        // Apply property configuration to the UI
+        function applyPropertyConfiguration() {
+            // Set document title
+            document.title = `Open House - ${PROPERTY_CONFIG.propertyName}`;
+            
+            // Update header title
+            document.getElementById('property-title').textContent = PROPERTY_CONFIG.propertyName.toUpperCase();
+            
+            // Update property details
+            document.getElementById('property-details').innerHTML = `
+                <p>${PROPERTY_CONFIG.propertyAddress} | ${PROPERTY_CONFIG.propertyPrice}</p>
+                <p>Agent: ${PROPERTY_CONFIG.agentName} | ${PROPERTY_CONFIG.agentPhone}</p>
+                ${PROPERTY_CONFIG.mlsNumber ? `<p>MLS# ${PROPERTY_CONFIG.mlsNumber}</p>` : ''}
+            `;
+            
+            // Update carousel images
+            const carousel = document.getElementById('carousel');
+            carousel.innerHTML = ''; // Clear any existing items
+            
+            PROPERTY_CONFIG.carouselImages.forEach((image, index) => {
+                const item = document.createElement('div');
+                item.className = 'carousel-item';
+                item.style.backgroundImage = `url('${image}')`;
+                carousel.appendChild(item);
+            });
+            
+            // Update QR code
+            const qrCode = document.getElementById('qr-code');
+            qrCode.src = PROPERTY_CONFIG.qrCodeImage;
+            
+            // Update QR text
+            document.getElementById('qr-text').textContent = PROPERTY_CONFIG.qrCodeText;
+            
+            // Update footer
+            document.getElementById('footer').innerHTML = `
+                <p>© ${new Date().getFullYear()} ${PROPERTY_CONFIG.companyName}</p>
+            `;
+            
+            // Update colors
+            document.documentElement.style.setProperty('--primary', PROPERTY_CONFIG.primaryColor);
+            document.documentElement.style.setProperty('--secondary', PROPERTY_CONFIG.secondaryColor);
+            
+            // Reset carousel position
+            currentIndex = 0;
+            carousel.style.transform = 'translateX(0)';
+            document.getElementById('carousel-caption').textContent = 
+                PROPERTY_CONFIG.carouselCaptions[0] || 'Luxury Living';
+        }
+        
+        // Apply property configuration on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            applyPropertyConfiguration();
+        });
+        
+        // Carousel functionality
+        const carousel = document.querySelector('.carousel');
+        let currentIndex = 0;
+        
+        function rotateCarousel() {
+            currentIndex = (currentIndex + 1) % PROPERTY_CONFIG.carouselImages.length;
+            carousel.style.transform = `translateX(-${currentIndex * 100}%)`;
+            
+            // Update caption
+            document.getElementById('carousel-caption').textContent = 
+                PROPERTY_CONFIG.carouselCaptions[currentIndex] || 'Luxury Living';
+        }
+        
+        // Start carousel auto-rotation
+        setInterval(rotateCarousel, 5000);
+        
+        // Form validation
+        const form = document.getElementById('sign-in-form');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const agentSelect = document.getElementById('agent');
+        const agentNameInput = document.getElementById('agent-name');
+        const agentNameContainer = document.querySelector('.agent-name-container');
+        const feedbackSelect = document.getElementById('feedback');
+        const successMessage = document.querySelector('.success-message');
+        const offlineIndicator = document.querySelector('.offline-indicator');
+        const toast = document.getElementById('toast-notification');
+        
+        // Show/hide agent name field based on selection
+        agentSelect.addEventListener('change', function() {
+            if (this.value === 'yes') {
+                agentNameContainer.style.display = 'block';
+                agentNameInput.setAttribute('required', 'required');
+            } else {
+                agentNameContainer.style.display = 'none';
+                agentNameInput.removeAttribute('required');
+                // Clear the input when hiding
+                agentNameInput.value = '';
+            }
+        });
+        
+        // Validate email format
+        function isValidEmail(email) {
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return regex.test(email);
+        }
+        
+        // Validate phone format
+        function isValidPhone(phone) {
+            const regex = /^[\d\s\-\(\)]+$/;
+            return regex.test(phone) && phone.replace(/[\s\-\(\)]/g, '').length >= 10;
+        }
+        
+        // Show error for an input
+        function showError(input, errorMsg) {
+            input.classList.add('input-error');
+            const errorElement = input.nextElementSibling;
+            errorElement.textContent = errorMsg;
+            errorElement.style.display = 'block';
+            return false;
+        }
+        
+        // Reset error for an input
+        function resetError(input) {
+            input.classList.remove('input-error');
+            const errorElement = input.nextElementSibling;
+            errorElement.style.display = 'none';
+        }
+        
+        // Form submission validation
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            let isValid = true;
+            
+            // Validate name
+            if (!nameInput.value.trim()) {
+                isValid = showError(nameInput, 'Please enter your name');
+            } else {
+                resetError(nameInput);
+            }
+            
+            // Validate email
+            if (!emailInput.value.trim()) {
+                isValid = showError(emailInput, 'Please enter your email address');
+            } else if (!isValidEmail(emailInput.value.trim())) {
+                isValid = showError(emailInput, 'Please enter a valid email address');
+            } else {
+                resetError(emailInput);
+            }
+            
+            // Validate phone
+            if (!phoneInput.value.trim()) {
+                isValid = showError(phoneInput, 'Please enter your phone number');
+            } else if (!isValidPhone(phoneInput.value.trim())) {
+                isValid = showError(phoneInput, 'Please enter a valid phone number');
+            } else {
+                resetError(phoneInput);
+            }
+            
+            // Validate agent selection
+            if (!agentSelect.value) {
+                isValid = showError(agentSelect, 'Please select an option');
+            } else {
+                resetError(agentSelect);
+                // If "Yes" is selected, validate agent name
+                if (agentSelect.value === 'yes' && !agentNameInput.value.trim()) {
+                    isValid = showError(agentNameInput, 'Please enter your agent\'s name');
+                } else if (agentSelect.value === 'yes') {
+                    resetError(agentNameInput);
+                }
+            }
+            
+            // Validate feedback selection
+            if (!feedbackSelect.value) {
+                isValid = showError(feedbackSelect, 'Please select an option');
+            } else {
+                resetError(feedbackSelect);
+            }
+            
+            if (isValid) {
+                // Prepare form data
+                const formData = {
+                    name: nameInput.value.trim(),
+                    email: emailInput.value.trim(),
+                    phone: phoneInput.value.trim(),
+                    workingWithAgent: agentSelect.value,
+                    agentName: agentSelect.value === 'yes' ? agentNameInput.value.trim() : '',
+                    provideFeedbackAnonymously: feedbackSelect.value,
+                    property: PROPERTY_CONFIG.propertyAddress,
+                    mlsNumber: PROPERTY_CONFIG.mlsNumber,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Check if online or offline
+                if (navigator.onLine) {
+                    // Online - would normally submit to server
+                    console.log('Submitting data:', formData);
+                    
+                    // Simulate submission success
+                    form.style.display = 'none';
+                    successMessage.style.display = 'block';
+                } else {
+                    // Offline - store data locally
+                    storeOfflineData(formData);
+                    form.style.display = 'none';
+                    successMessage.style.display = 'block';
+                    offlineIndicator.style.display = 'block';
+                }
+            }
+        });
+        
+        // Reset errors on input
+        nameInput.addEventListener('input', () => resetError(nameInput));
+        emailInput.addEventListener('input', () => resetError(emailInput));
+        phoneInput.addEventListener('input', () => resetError(phoneInput));
+        agentSelect.addEventListener('change', () => resetError(agentSelect));
+        agentNameInput.addEventListener('input', () => resetError(agentNameInput));
+        feedbackSelect.addEventListener('change', () => resetError(feedbackSelect));
+        
+        // Offline data storage
+        function storeOfflineData(data) {
+            let storedData = localStorage.getItem('openHouseSignIns');
+            let dataArray = storedData ? JSON.parse(storedData) : [];
+            dataArray.push(data);
+            localStorage.setItem('openHouseSignIns', JSON.stringify(dataArray));
+        }
+        
+        // Listen for online status changes
+        window.addEventListener('online', function() {
+            showToast('You are back online! Submitting stored data...');
+            // Would normally implement syncing of stored data here
+            submitStoredData();
+        });
+        
+        window.addEventListener('offline', function() {
+            showToast('You are offline. Data will be saved locally.');
+        });
+        
+        function submitStoredData() {
+            const storedData = localStorage.getItem('openHouseSignIns');
+            if (storedData) {
+                const dataArray = JSON.parse(storedData);
+                // Would normally send data to server here
+                console.log('Submitting stored data:', dataArray);
+                // Clear storage after successful submission
+                localStorage.removeItem('openHouseSignIns');
+            }
+        }
+        
+        // Toast notification
+        function showToast(message) {
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Check initial connection state
+        if (!navigator.onLine) {
+            showToast('You are offline. Data will be saved locally.');
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luxury Open House Sign-In</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    
+    <!-- 
+    ======================================
+    PROPERTY CONFIGURATION SECTION
+    ======================================
+    Edit these variables to customize for each property
+    -->
+    <script>
+        // Property Information - Edit these values for each property
+        const PROPERTY_CONFIG = {
+            // Property details
+            propertyName: "Luxury Mountain Retreat",
+            propertyAddress: "123 Alpine Way, Park City, UT 84060",
+            propertyPrice: "$2,450,000",
+            
+            // Open house details
+            agentName: "Jane Smith",
+            agentPhone: "(435) 555-1234",
+            agentEmail: "jane@luxuryrealty.com",
+            
+            // Company branding
+            companyName: "Luxury Real Estate",
+            companyLogo: "", // If you have a logo URL, add it here
+            primaryColor: "#14253d", // Dark blue
+            secondaryColor: "#7c5e2e", // Gold
+            
+            // Carousel images - add up to 6 image URLs
+            // For real implementation, use actual image paths
+            carouselImages: [
+                "/api/placeholder/800/500", // Replace with actual image paths
+                "/api/placeholder/800/500", 
+                "/api/placeholder/800/500",
+                "/api/placeholder/800/500"
+            ],
+            
+            // Carousel captions - one for each image
+            carouselCaptions: [
+                "Luxury Living at Its Finest",
+                "Stunning Mountain Views",
+                "Gourmet Chef's Kitchen",
+                "Resort-Style Pool"
+            ],
+            
+            // QR code for digital sign-in
+            // For actual implementation, generate a QR code for your Google Form or other digital sign-in
+            qrCodeImage: "/api/placeholder/200/200", // Replace with actual QR code image
+            qrCodeText: "Scan to sign in on your phone"
+        };
+    </script>
+    <style>
+        :root {
+            --primary: #14253d;
+            --secondary: #7c5e2e;
+            --light: #f5f5f5;
+            --error: #b71c1c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Playfair Display', 'Georgia', serif;
+        }
+        
+        body {
+            background-color: var(--light);
+            color: var(--primary);
+            max-width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .header {
+            padding: 20px 0;
+            text-align: center;
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+        
+        .property-details {
+            text-align: center;
+            padding: 10px 0;
+            background-color: rgba(0,0,0,0.05);
+            font-size: 0.9rem;
+        }
+        
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 20px 20px;
+        }
+        
+        /* Carousel Styling */
+        .carousel-container {
+            position: relative;
+            margin: 20px 0;
+            height: 35vh;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .carousel {
+            display: flex;
+            height: 100%;
+            transition: transform 0.8s ease-in-out;
+        }
+        
+        .carousel-item {
+            min-width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            text-align: center;
+        }
+        
+        /* Form Styling */
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .qr-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: rgba(0,0,0,0.03);
+            border-radius: 8px;
+        }
+        
+        .qr-code {
+            width: 120px;
+            height: 120px;
+            margin: 10px 0;
+        }
+        
+        .qr-text {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+        
+        .or-divider {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            color: #888;
+        }
+        
+        .or-divider::before,
+        .or-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .or-divider::before {
+            margin-right: 10px;
+        }
+        
+        .or-divider::after {
+            margin-left: 10px;
+        }
+        
+        h2 {
+            margin-bottom: 20px;
+            color: var(--secondary);
+            font-weight: 400;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border 0.3s ease;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--secondary);
+        }
+        
+        .error-message {
+            color: var(--error);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .input-error {
+            border-color: var(--error);
+        }
+        
+        button {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 15px 0;
+            width: 100%;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            letter-spacing: 1px;
+        }
+        
+        button:hover {
+            background-color: #8d6a34;
+        }
+        
+        .success-message {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(76, 175, 80, 0.1);
+            border-radius: 5px;
+            color: #4CAF50;
+        }
+        
+        .offline-indicator {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #ff9800;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 1000;
+        }
+        
+        /* Agent name container */
+        .agent-name-container {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 id="property-title">LUXURY OPEN HOUSE</h1>
+    </div>
+    
+    <div class="property-details" id="property-details">
+        <!-- Property details will be inserted here by JavaScript -->
+    </div>
+    
+    <div class="content">
+        <!-- Image Carousel -->
+        <div class="carousel-container">
+            <div class="carousel" id="carousel">
+                <!-- Carousel images will be inserted here by JavaScript -->
+            </div>
+            <div class="caption" id="carousel-caption">Luxury Living at Its Finest</div>
+        </div>
+        
+        <!-- Form -->
+        <div class="form-container">
+            <h2>Welcome to our Open House</h2>
+            
+            <!-- QR Code Section -->
+            <div class="qr-section">
+                <p>Quick Sign-In Option:</p>
+                <img id="qr-code" class="qr-code" alt="QR Code for digital sign-in">
+                <div class="qr-text" id="qr-text">Scan to sign in on your phone</div>
+            </div>
+            
+            <div class="or-divider">OR</div>
+            
+            <form id="sign-in-form">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" required>
+                    <div class="error-message">Please enter your name</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required>
+                    <div class="error-message">Please enter a valid email address</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" required>
+                    <div class="error-message">Please enter a valid phone number</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="agent">Are you working with an agent?</label>
+                    <select id="agent" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                    <div class="error-message">Please select an option</div>
+                </div>
+                
+                <div class="form-group agent-name-container" style="display: none;">
+                    <label for="agent-name">Agent's Name</label>
+                    <input type="text" id="agent-name">
+                    <div class="error-message">Please enter your agent's name</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="feedback">Provide Feedback Anonymously?</label>
+                    <select id="feedback" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                    <div class="error-message">Please select an option</div>
+                </div>
+                
+                <button type="submit">SUBMIT</button>
+            </form>
+            
+            <div class="success-message">
+                Thank you for signing in! Enjoy your visit.
+            </div>
+            
+            <div class="offline-indicator">
+                You are currently offline. Your information will be saved and submitted when you reconnect.
+            </div>
+        </div>
+        
+        <div class="footer" id="footer">
+            <p>© 2025 Luxury Real Estate</p>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast-notification"></div>
+    
+    <script>
+        // Apply property configuration
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set document title
+            document.title = `Open House - ${PROPERTY_CONFIG.propertyName}`;
+            
+            // Update header title
+            document.getElementById('property-title').textContent = PROPERTY_CONFIG.propertyName.toUpperCase();
+            
+            // Update property details
+            document.getElementById('property-details').innerHTML = `
+                <p>${PROPERTY_CONFIG.propertyAddress} | ${PROPERTY_CONFIG.propertyPrice}</p>
+                <p>Agent: ${PROPERTY_CONFIG.agentName} | ${PROPERTY_CONFIG.agentPhone}</p>
+            `;
+            
+            // Update carousel images
+            const carousel = document.getElementById('carousel');
+            carousel.innerHTML = ''; // Clear any existing items
+            
+            PROPERTY_CONFIG.carouselImages.forEach((image, index) => {
+                const item = document.createElement('div');
+                item.className = 'carousel-item';
+                item.style.backgroundImage = `url('${image}')`;
+                carousel.appendChild(item);
+            });
+            
+            // Update QR code
+            const qrCode = document.getElementById('qr-code');
+            qrCode.src = PROPERTY_CONFIG.qrCodeImage;
+            
+            // Update QR text
+            document.getElementById('qr-text').textContent = PROPERTY_CONFIG.qrCodeText;
+            
+            // Update footer
+            document.getElementById('footer').innerHTML = `
+                <p>© ${new Date().getFullYear()} ${PROPERTY_CONFIG.companyName}</p>
+            `;
+            
+            // Update colors
+            document.documentElement.style.setProperty('--primary', PROPERTY_CONFIG.primaryColor);
+            document.documentElement.style.setProperty('--secondary', PROPERTY_CONFIG.secondaryColor);
+        });
+        
+        // Carousel functionality
+        const carousel = document.querySelector('.carousel');
+        let currentIndex = 0;
+        
+        function rotateCarousel() {
+            currentIndex = (currentIndex + 1) % PROPERTY_CONFIG.carouselImages.length;
+            carousel.style.transform = `translateX(-${currentIndex * 100}%)`;
+            
+            // Update caption
+            document.getElementById('carousel-caption').textContent = 
+                PROPERTY_CONFIG.carouselCaptions[currentIndex] || 'Luxury Living';
+        }
+        
+        // Start carousel auto-rotation
+        setInterval(rotateCarousel, 5000);
+        
+        // Form validation
+        const form = document.getElementById('sign-in-form');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const agentSelect = document.getElementById('agent');
+        const agentNameInput = document.getElementById('agent-name');
+        const agentNameContainer = document.querySelector('.agent-name-container');
+        const feedbackSelect = document.getElementById('feedback');
+        const successMessage = document.querySelector('.success-message');
+        const offlineIndicator = document.querySelector('.offline-indicator');
+        const toast = document.getElementById('toast-notification');
+        
+        // Show/hide agent name field based on selection
+        agentSelect.addEventListener('change', function() {
+            if (this.value === 'yes') {
+                agentNameContainer.style.display = 'block';
+                agentNameInput.setAttribute('required', 'required');
+            } else {
+                agentNameContainer.style.display = 'none';
+                agentNameInput.removeAttribute('required');
+                // Clear the input when hiding
+                agentNameInput.value = '';
+            }
+        });
+        
+        // Validate email format
+        function isValidEmail(email) {
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return regex.test(email);
+        }
+        
+        // Validate phone format
+        function isValidPhone(phone) {
+            const regex = /^[\d\s\-\(\)]+$/;
+            return regex.test(phone) && phone.replace(/[\s\-\(\)]/g, '').length >= 10;
+        }
+        
+        // Show error for an input
+        function showError(input, errorMsg) {
+            input.classList.add('input-error');
+            const errorElement = input.nextElementSibling;
+            errorElement.textContent = errorMsg;
+            errorElement.style.display = 'block';
+            return false;
+        }
+        
+        // Reset error for an input
+        function resetError(input) {
+            input.classList.remove('input-error');
+            const errorElement = input.nextElementSibling;
+            errorElement.style.display = 'none';
+        }
+        
+        // Form submission validation
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            let isValid = true;
+            
+            // Validate name
+            if (!nameInput.value.trim()) {
+                isValid = showError(nameInput, 'Please enter your name');
+            } else {
+                resetError(nameInput);
+            }
+            
+            // Validate email
+            if (!emailInput.value.trim()) {
+                isValid = showError(emailInput, 'Please enter your email address');
+            } else if (!isValidEmail(emailInput.value.trim())) {
+                isValid = showError(emailInput, 'Please enter a valid email address');
+            } else {
+                resetError(emailInput);
+            }
+            
+            // Validate phone
+            if (!phoneInput.value.trim()) {
+                isValid = showError(phoneInput, 'Please enter your phone number');
+            } else if (!isValidPhone(phoneInput.value.trim())) {
+                isValid = showError(phoneInput, 'Please enter a valid phone number');
+            } else {
+                resetError(phoneInput);
+            }
+            
+            // Validate agent selection
+            if (!agentSelect.value) {
+                isValid = showError(agentSelect, 'Please select an option');
+            } else {
+                resetError(agentSelect);
+                // If "Yes" is selected, validate agent name
+                if (agentSelect.value === 'yes' && !agentNameInput.value.trim()) {
+                    isValid = showError(agentNameInput, 'Please enter your agent\'s name');
+                } else if (agentSelect.value === 'yes') {
+                    resetError(agentNameInput);
+                }
+            }
+            
+            // Validate feedback selection
+            if (!feedbackSelect.value) {
+                isValid = showError(feedbackSelect, 'Please select an option');
+            } else {
+                resetError(feedbackSelect);
+            }
+            
+            if (isValid) {
+                // Prepare form data
+                const formData = {
+                    name: nameInput.value.trim(),
+                    email: emailInput.value.trim(),
+                    phone: phoneInput.value.trim(),
+                    workingWithAgent: agentSelect.value,
+                    agentName: agentSelect.value === 'yes' ? agentNameInput.value.trim() : '',
+                    provideFeedbackAnonymously: feedbackSelect.value,
+                    property: PROPERTY_CONFIG.propertyAddress,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Check if online or offline
+                if (navigator.onLine) {
+                    // Online - would normally submit to server
+                    console.log('Submitting data:', formData);
+                    
+                    // Simulate submission success
+                    form.style.display = 'none';
+                    successMessage.style.display = 'block';
+                } else {
+                    // Offline - store data locally
+                    storeOfflineData(formData);
+                    form.style.display = 'none';
+                    successMessage.style.display = 'block';
+                    offlineIndicator.style.display = 'block';
+                }
+            }
+        });
+        
+        // Reset errors on input
+        nameInput.addEventListener('input', () => resetError(nameInput));
+        emailInput.addEventListener('input', () => resetError(emailInput));
+        phoneInput.addEventListener('input', () => resetError(phoneInput));
+        agentSelect.addEventListener('change', () => resetError(agentSelect));
+        agentNameInput.addEventListener('input', () => resetError(agentNameInput));
+        feedbackSelect.addEventListener('change', () => resetError(feedbackSelect));
+        
+        // Offline data storage
+        function storeOfflineData(data) {
+            let storedData = localStorage.getItem('openHouseSignIns');
+            let dataArray = storedData ? JSON.parse(storedData) : [];
+            dataArray.push(data);
+            localStorage.setItem('openHouseSignIns', JSON.stringify(dataArray));
+        }
+        
+        // Listen for online status changes
+        window.addEventListener('online', function() {
+            showToast('You are back online! Submitting stored data...');
+            // Would normally implement syncing of stored data here
+            submitStoredData();
+        });
+        
+        window.addEventListener('offline', function() {
+            showToast('You are offline. Data will be saved locally.');
+        });
+        
+        function submitStoredData() {
+            const storedData = localStorage.getItem('openHouseSignIns');
+            if (storedData) {
+                const dataArray = JSON.parse(storedData);
+                // Would normally send data to server here
+                console.log('Submitting stored data:', dataArray);
+                // Clear storage after successful submission
+                localStorage.removeItem('openHouseSignIns');
+            }
+        }
+        
+        // Toast notification
+        function showToast(message) {
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Check initial connection state
+        if (!navigator.onLine) {
+            showToast('You are offline. Data will be saved locally.');
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luxury Open House Sign-In</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #14253d;
+            --secondary: #7c5e2e;
+            --light: #f5f5f5;
+            --error: #b71c1c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Playfair Display', 'Georgia', serif;
+        }
+        
+        body {
+            background-color: var(--light);
+            color: var(--primary);
+            max-width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .header {
+            padding: 20px 0;
+            text-align: center;
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            letter-spacing: 2px;
+            font-weight: 300;
+        }
+        
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 20px 20px;
+        }
+        
+        /* Carousel Styling */
+        .carousel-container {
+            position: relative;
+            margin: 20px 0;
+            height: 40vh;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .carousel {
+            display: flex;
+            height: 100%;
+            transition: transform 0.8s ease-in-out;
+        }
+        
+        .carousel-item {
+            min-width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            text-align: center;
+        }
+        
+        /* Form Styling */
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            margin-bottom: 20px;
+            color: var(--secondary);
+            font-weight: 400;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--primary);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border 0.3s ease;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--secondary);
+        }
+        
+        .error-message {
+            color: var(--error);
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .input-error {
+            border-color: var(--error);
+        }
+        
+        button {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 15px 0;
+            width: 100%;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            letter-spacing: 1px;
+        }
+        
+        button:hover {
+            background-color: #8d6a34;
+        }
+        
+        .success-message {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(76, 175, 80, 0.1);
+            border-radius: 5px;
+            color: #4CAF50;
+        }
+        
+        .offline-indicator {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #ff9800;
+        }
+        
+        /* Signature pad */
+        .signature-container {
+            margin-bottom: 20px;
+        }
+        
+        #signature-pad {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            height: 150px;
+            background-color: white;
+        }
+        
+        .signature-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 5px;
+        }
+        
+        .signature-actions button {
+            width: auto;
+            padding: 8px 15px;
+            margin-left: 10px;
+            font-size: 0.8rem;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>LUXURY OPEN HOUSE</h1>
+    </div>
+    
+    <div class="content">
+        <!-- Image Carousel -->
+        <div class="carousel-container">
+            <div class="carousel">
+                <div class="carousel-item" style="background-image: url('/api/placeholder/800/500');"></div>
+                <div class="carousel-item" style="background-image: url('/api/placeholder/800/500');"></div>
+                <div class="carousel-item" style="background-image: url('/api/placeholder/800/500');"></div>
+                <div class="carousel-item" style="background-image: url('/api/placeholder/800/500');"></div>
+            </div>
+            <div class="caption">Luxury Living at Its Finest</div>
+        </div>
+        
+        <!-- Form -->
+        <div class="form-container">
+            <h2>Welcome to our Open House</h2>
+            <form id="sign-in-form">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" required>
+                    <div class="error-message">Please enter your name</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required>
+                    <div class="error-message">Please enter a valid email address</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" required>
+                    <div class="error-message">Please enter a valid phone number</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="agent">Are you working with an agent?</label>
+                    <select id="agent" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                    <div class="error-message">Please select an option</div>
+                </div>
+                
+                <div class="form-group agent-name-container" style="display: none;">
+                    <label for="agent-name">Agent's Name</label>
+                    <input type="text" id="agent-name">
+                    <div class="error-message">Please enter your agent's name</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="feedback">Provide Feedback Anonymously?</label>
+                    <select id="feedback" required>
+                        <option value="" disabled selected>Select an option</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                    </select>
+                    <div class="error-message">Please select an option</div>
+                </div>
+                
+                <button type="submit">SUBMIT</button>
+            </form>
+            
+            <div class="success-message">
+                Thank you for signing in! Enjoy your visit.
+            </div>
+            
+            <div class="offline-indicator">
+                You are currently offline. Your information will be saved and submitted when you reconnect.
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 Luxury Real Estate</p>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast-notification"></div>
+    
+    <script>
+        // Carousel functionality
+        const carousel = document.querySelector('.carousel');
+        const items = document.querySelectorAll('.carousel-item');
+        let currentIndex = 0;
+        
+        function rotateCarousel() {
+            currentIndex = (currentIndex + 1) % items.length;
+            carousel.style.transform = `translateX(-${currentIndex * 100}%)`;
+        }
+        
+        // Start carousel auto-rotation
+        setInterval(rotateCarousel, 5000);
+        
+        // Form validation
+        const form = document.getElementById('sign-in-form');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const agentSelect = document.getElementById('agent');
+        const agentNameInput = document.getElementById('agent-name');
+        const agentNameContainer = document.querySelector('.agent-name-container');
+        const feedbackSelect = document.getElementById('feedback');
+        const successMessage = document.querySelector('.success-message');
+        const offlineIndicator = document.querySelector('.offline-indicator');
+        const toast = document.getElementById('toast-notification');
+        
+        // Feedback checkbox
+        
+        // Show/hide agent name field based on selection
+        agentSelect.addEventListener('change', function() {
+            if (this.value === 'yes') {
+                agentNameContainer.style.display = 'block';
+                agentNameInput.setAttribute('required', 'required');
+            } else {
+                agentNameContainer.style.display = 'none';
+                agentNameInput.removeAttribute('required');
+                // Clear the input when hiding
+                agentNameInput.value = '';
+            }
+        });
+        
+        // Validate email format
+        function isValidEmail(email) {
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return regex.test(email);
+        }
+        
+        // Validate phone format
+        function isValidPhone(phone) {
+            const regex = /^[\d\s\-\(\)]+$/;
+            return regex.test(phone) && phone.replace(/[\s\-\(\)]/g, '').length >= 10;
+        }
+        
+        // Show error for an input
+        function showError(input, errorMsg) {
+            input.classList.add('input-error');
+            const errorElement = input.nextElementSibling;
+            errorElement.textContent = errorMsg;
+            errorElement.style.display = 'block';
+            return false;
+        }
+        
+        // Reset error for an input
+        function resetError(input) {
+            input.classList.remove('input-error');
+            const errorElement = input.nextElementSibling;
+            errorElement.style.display = 'none';
+        }
+        
+        // Form submission validation
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            let isValid = true;
+            
+            // Validate name
+            if (!nameInput.value.trim()) {
+                isValid = showError(nameInput, 'Please enter your name');
+            } else {
+                resetError(nameInput);
+            }
+            
+            // Validate email
+            if (!emailInput.value.trim()) {
+                isValid = showError(emailInput, 'Please enter your email address');
+            } else if (!isValidEmail(emailInput.value.trim())) {
+                isValid = showError(emailInput, 'Please enter a valid email address');
+            } else {
+                resetError(emailInput);
+            }
+            
+            // Validate phone
+            if (!phoneInput.value.trim()) {
+                isValid = showError(phoneInput, 'Please enter your phone number');
+            } else if (!isValidPhone(phoneInput.value.trim())) {
+                isValid = showError(phoneInput, 'Please enter a valid phone number');
+            } else {
+                resetError(phoneInput);
+            }
+            
+            // Validate agent selection
+            if (!agentSelect.value) {
+                isValid = showError(agentSelect, 'Please select an option');
+            } else {
+                resetError(agentSelect);
+                // If "Yes" is selected, validate agent name
+                if (agentSelect.value === 'yes' && !agentNameInput.value.trim()) {
+                    isValid = showError(agentNameInput, 'Please enter your agent\'s name');
+                } else if (agentSelect.value === 'yes') {
+                    resetError(agentNameInput);
+                }
+            }
+            
+            // Validate feedback selection
+            if (!feedbackSelect.value) {
+                isValid = showError(feedbackSelect, 'Please select an option');
+            } else {
+                resetError(feedbackSelect);
+            }
+            
+            if (isValid) {
+                // Prepare form data
+                const formData = {
+                    name: nameInput.value.trim(),
+                    email: emailInput.value.trim(),
+                    phone: phoneInput.value.trim(),
+                    workingWithAgent: agentSelect.value,
+                    agentName: agentSelect.value === 'yes' ? agentNameInput.value.trim() : '',
+                    provideFeedbackAnonymously: feedbackSelect.value,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Check if online or offline
+                if (navigator.onLine) {
+                    // Online - would normally submit to server
+                    console.log('Submitting data:', formData);
+                    
+                    // Simulate submission success
+                    form.style.display = 'none';
+                    successMessage.style.display = 'block';
+                } else {
+                    // Offline - store data locally
+                    storeOfflineData(formData);
+                    form.style.display = 'none';
+                    successMessage.style.display = 'block';
+                    offlineIndicator.style.display = 'block';
+                }
+            }
+        });
+        
+        // Reset errors on input
+        nameInput.addEventListener('input', () => resetError(nameInput));
+        emailInput.addEventListener('input', () => resetError(emailInput));
+        phoneInput.addEventListener('input', () => resetError(phoneInput));
+        agentSelect.addEventListener('change', () => resetError(agentSelect));
+        agentNameInput.addEventListener('input', () => resetError(agentNameInput));
+        feedbackSelect.addEventListener('change', () => resetError(feedbackSelect));
+        
+        // Offline data storage
+        function storeOfflineData(data) {
+            let storedData = localStorage.getItem('openHouseSignIns');
+            let dataArray = storedData ? JSON.parse(storedData) : [];
+            dataArray.push(data);
+            localStorage.setItem('openHouseSignIns', JSON.stringify(dataArray));
+        }
+        
+        // Listen for online status changes
+        window.addEventListener('online', function() {
+            showToast('You are back online! Submitting stored data...');
+            // Would normally implement syncing of stored data here
+            submitStoredData();
+        });
+        
+        window.addEventListener('offline', function() {
+            showToast('You are offline. Data will be saved locally.');
+        });
+        
+        function submitStoredData() {
+            const storedData = localStorage.getItem('openHouseSignIns');
+            if (storedData) {
+                const dataArray = JSON.parse(storedData);
+                // Would normally send data to server here
+                console.log('Submitting stored data:', dataArray);
+                // Clear storage after successful submission
+                localStorage.removeItem('openHouseSignIns');
+            }
+        }
+        
+        // Toast notification
+        function showToast(message) {
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Check initial connection state
+        if (!navigator.onLine) {
+            showToast('You are offline. Data will be saved locally.');
+        }
+    </script>
+</body>
+</html>
