@@ -258,6 +258,20 @@
             text-align: center;
         }
         
+        /* Two-column form layout */
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+            margin-bottom: 0; /* Remove bottom margin */
+        }
+        
+        .form-column {
+            flex: 1;
+            padding: 0 10px;
+            min-width: 250px; /* Ensures columns don't get too narrow */
+        }
+        
         .form-group {
             margin-bottom: 20px;
         }
@@ -371,6 +385,13 @@
             cursor: pointer;
             z-index: 100;
         }
+        
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .form-column {
+                flex: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -419,48 +440,56 @@
             <div class="or-divider">OR</div>
             
             <form id="sign-in-form">
-                <div class="form-group">
-                    <label for="name">Full Name</label>
-                    <input type="text" id="name" required>
-                    <div class="error-message">Please enter your name</div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" required>
-                    <div class="error-message">Please enter a valid email address</div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="phone">Phone Number</label>
-                    <input type="tel" id="phone" required>
-                    <div class="error-message">Please enter a valid phone number</div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="agent">Are you working with an agent?</label>
-                    <select id="agent" required>
-                        <option value="" disabled selected>Select an option</option>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                    </select>
-                    <div class="error-message">Please select an option</div>
-                </div>
-                
-                <div class="form-group agent-name-container" style="display: none;">
-                    <label for="agent-name">Agent's Name</label>
-                    <input type="text" id="agent-name">
-                    <div class="error-message">Please enter your agent's name</div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="feedback">Provide Feedback Anonymously?</label>
-                    <select id="feedback" required>
-                        <option value="" disabled selected>Select an option</option>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                    </select>
-                    <div class="error-message">Please select an option</div>
+                <div class="form-row">
+                    <!-- Left Column -->
+                    <div class="form-column">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" required>
+                            <div class="error-message">Please enter your name</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" required>
+                            <div class="error-message">Please enter a valid email address</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" required>
+                            <div class="error-message">Please enter a valid phone number</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="form-column">
+                        <div class="form-group">
+                            <label for="agent">Are you working with an agent?</label>
+                            <select id="agent" required>
+                                <option value="" disabled selected>Select an option</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                            </select>
+                            <div class="error-message">Please select an option</div>
+                        </div>
+                        
+                        <div class="form-group agent-name-container" style="display: none;">
+                            <label for="agent-name">Agent's Name</label>
+                            <input type="text" id="agent-name">
+                            <div class="error-message">Please enter your agent's name</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="feedback">Provide Feedback Anonymously?</label>
+                            <select id="feedback" required>
+                                <option value="" disabled selected>Select an option</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                            </select>
+                            <div class="error-message">Please select an option</div>
+                        </div>
+                    </div>
                 </div>
                 
                 <button type="submit">SUBMIT</button>
