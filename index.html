@@ -439,25 +439,25 @@
             
             <div class="or-divider">OR</div>
             
-            <form id="sign-in-form">
+            <form id="sign-in-form" autocomplete="on">
                 <div class="form-row">
                     <!-- Left Column -->
                     <div class="form-column">
                         <div class="form-group">
                             <label for="name">Full Name</label>
-                            <input type="text" id="name" required>
+                            <input type="text" id="name" name="name" autocomplete="name" required>
                             <div class="error-message">Please enter your name</div>
                         </div>
                         
                         <div class="form-group">
                             <label for="email">Email Address</label>
-                            <input type="email" id="email" required>
+                            <input type="email" id="email" name="email" autocomplete="email" required>
                             <div class="error-message">Please enter a valid email address</div>
                         </div>
                         
                         <div class="form-group">
                             <label for="phone">Phone Number</label>
-                            <input type="tel" id="phone" required>
+                            <input type="tel" id="phone" name="phone" autocomplete="tel" required>
                             <div class="error-message">Please enter a valid phone number</div>
                         </div>
                     </div>
@@ -466,7 +466,7 @@
                     <div class="form-column">
                         <div class="form-group">
                             <label for="agent">Are you working with an agent?</label>
-                            <select id="agent" required>
+                            <select id="agent" name="agent" required>
                                 <option value="" disabled selected>Select an option</option>
                                 <option value="yes">Yes</option>
                                 <option value="no">No</option>
@@ -476,13 +476,13 @@
                         
                         <div class="form-group agent-name-container" style="display: none;">
                             <label for="agent-name">Agent's Name</label>
-                            <input type="text" id="agent-name">
+                            <input type="text" id="agent-name" name="agent-name">
                             <div class="error-message">Please enter your agent's name</div>
                         </div>
                         
                         <div class="form-group">
                             <label for="feedback">Provide Feedback Anonymously?</label>
-                            <select id="feedback" required>
+                            <select id="feedback" name="feedback" required>
                                 <option value="" disabled selected>Select an option</option>
                                 <option value="yes">Yes</option>
                                 <option value="no">No</option>
@@ -822,56 +822,4 @@
         });
         
         // Reset errors on input
-        nameInput.addEventListener('input', () => resetError(nameInput));
-        emailInput.addEventListener('input', () => resetError(emailInput));
-        phoneInput.addEventListener('input', () => resetError(phoneInput));
-        agentSelect.addEventListener('change', () => resetError(agentSelect));
-        agentNameInput.addEventListener('input', () => resetError(agentNameInput));
-        feedbackSelect.addEventListener('change', () => resetError(feedbackSelect));
-        
-        // Offline data storage
-        function storeOfflineData(data) {
-            let storedData = localStorage.getItem('openHouseSignIns');
-            let dataArray = storedData ? JSON.parse(storedData) : [];
-            dataArray.push(data);
-            localStorage.setItem('openHouseSignIns', JSON.stringify(dataArray));
-        }
-        
-        // Listen for online status changes
-        window.addEventListener('online', function() {
-            showToast('You are back online! Submitting stored data...');
-            // Would normally implement syncing of stored data here
-            submitStoredData();
-        });
-        
-        window.addEventListener('offline', function() {
-            showToast('You are offline. Data will be saved locally.');
-        });
-        
-        function submitStoredData() {
-            const storedData = localStorage.getItem('openHouseSignIns');
-            if (storedData) {
-                const dataArray = JSON.parse(storedData);
-                // Would normally send data to server here
-                console.log('Submitting stored data:', dataArray);
-                // Clear storage after successful submission
-                localStorage.removeItem('openHouseSignIns');
-            }
-        }
-        
-        // Toast notification
-        function showToast(message) {
-            toast.textContent = message;
-            toast.style.display = 'block';
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 3000);
-        }
-        
-        // Check initial connection state
-        if (!navigator.onLine) {
-            showToast('You are offline. Data will be saved locally.');
-        }
-    </script>
-</body>
-</html>
+        nameInput.addEventListener('
